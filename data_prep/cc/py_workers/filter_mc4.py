@@ -20,12 +20,11 @@ def filter_one_file(input_path,out_dir='/mnt/nfs/Users/lfsm/filterd_mc4/cc_filte
     # tokenize the text before feed to the filter
     data = {'label':[],'wiki_prob':[],'tokens' :[], 'length' :[]}
     df = pd.DataFrame(data)
-    pbar.update(1)
     # create a dataframe to save the result
     with pa.OSFile(input_path, 'rb') as f:
         reader = pa.ipc.open_stream(f)
         batches = [batch for batch in reader]
-    for batch in batches:
+    for batch in tqdm(batches):
         df_mc4 = batch.to_pandas()
         df_text = df_mc4['text']
         df_text_list = df_text.tolist()
@@ -49,7 +48,7 @@ if __name__ == '__main__':
     input_dir = '/mnt/nfs/Users/lfsm/mc4/mc4/ja/0.0.0/99acea4a740b4cc36e4a93a238c7de11b0ce341d65b7d37168b3b90fd64721d2/'
     input_files = [os.path.join(input_dir,name) for name in os.listdir(input_dir)]
     pool_size = mp.cpu_count()
-    global pbar
-    pbar = tqdm(total=len(input_files), desc='Processing', unit='task')
+    # global pbar
+    # pbar = tqdm(total=len(input_files), desc='Processing', unit='task')
     with mp.Pool(pool_size) as p:
         p.map(filter_one_file, input_files)
