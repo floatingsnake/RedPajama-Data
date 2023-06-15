@@ -23,25 +23,24 @@ def filter_one_file(input_path,out_dir='/mnt/nfs/Users/lfsm/filterd_oscar2023/cc
     # create a dataframe to save the result
     with pa.OSFile(input_path, 'rb') as f:
         reader = pa.ipc.open_stream(f)
-        batches = [batch for batch in reader]
-    for batch in tqdm(batches):
-        df_mc4 = batch.to_pandas()
-        df_text = df_mc4['text']
-        df_text_list = df_text.tolist()
-        for text in df_text_list:
-            # do the filter now!
-            tokens = ' '.join(tokenizer.tokenize(text))
-            # tokenize the text
-            pred = model.predict(tokens)
-            # feed to model to get the result
-            (pred_label, pred_prob) = pred
-            wiki_prob = pred_prob[0]
-            if pred_label[0] == "__label__cc":
-                wiki_prob = 1 - wiki_prob
-            if wiki_prob > 0.2:
-                # get the probility of being a wiki-reference for the text
-                new_row = pd.DataFrame({'label':[pred_label], 'wiki_prob': [wiki_prob],'tokens':[tokens], 'length':[len(tokens)]})
-                df = pd.concat([df,new_row],ignore_index=True)
+        for batch in tqdm(reader):
+            df_mc4 = batch.to_pandas()
+            df_text = df_mc4['text']
+            df_text_list = df_text.tolist()
+            for text in df_text_list:
+                # do the filter now!
+                tokens = ' '.join(tokenizer.tokenize(text))
+                # tokenize the text
+                pred = model.predict(tokens)
+                # feed to model to get the result
+                (pred_label, pred_prob) = pred
+                wiki_prob = pred_prob[0]
+                if pred_label[0] == "__label__cc":
+                    wiki_prob = 1 - wiki_prob
+                if wiki_prob > 0.2:
+                    # get the probility of being a wiki-reference for the text
+                    new_row = pd.DataFrame({'label':[pred_label], 'wiki_prob': [wiki_prob],'tokens':[tokens], 'length':[len(tokens)]})
+                    df = pd.concat([df,new_row],ignore_index=True)
     df.to_parquet(out_file)  
     # save the data
 
